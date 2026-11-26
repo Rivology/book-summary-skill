@@ -5,10 +5,17 @@ tab in the user's "Book Summaries" Claude Doc, retelling the whole book so well 
 of the book. It follows `summary-spec.md` exactly (read it first, every run): every beat of the story, the world and
 the characters woven into the story (no separate world tour or cast list), no pictures in fiction, one short
 "What it all means", a Sources line with the check counts. Nothing is invented: every fact comes from a researched
-story bible, and an independent checking pass confirms it.
+story bible, and an independent check in a separate chat confirms it.
 
-The user usually starts this from the Claude phone app ("Book summary: <title>") and checks back later. Work
-through the whole run without asking anything, unless the title could mean two different books.
+There are two chats per book, because a chat cannot check its own writing (test runs that did both in one chat
+missed 16 to 21 errors a book):
+- **Writing chat**, started with "Book summary: <title>": sections 1 to 5 below. It ends by telling the user to
+  open a new chat and send "Book summary check: <title>".
+- **Check chat**, started with "Book summary check: <title>" (or "check", "fact-check" or "verify" plus a book
+  already in the library): section 6 only. It never saw the writing and judges only what is in the doc.
+
+The user usually starts these from the Claude phone app and checks back later. Work through the whole run without
+asking anything, unless the title could mean two different books.
 
 Here there are no helper agents and no Mac files, so the run uses the code-execution sandbox as its desk: write the
 bible, the summary text and the check table as files in it (for example under `/tmp/book/`), and keep your reply
@@ -60,8 +67,7 @@ at the top.
   the title, a one-line italic status line and one pending block per section, so the user can watch it fill in.
 - Write from the bible only, section by section, each section one docs update replacing its pending block; a long
   story one part at a time. Each place, device, rule, term and character goes into the story at the moment it
-  first matters. Keep a copy of every section you write in `/tmp/book/summary.md` as you go (the checking pass
-  reads that file).
+  first matters. Keep a copy of every section you write in `/tmp/book/summary.md` as you go.
 - Follow the spec's style rules: tell scenes, don't list events; give the big scenes room; match the book's voice;
   short quotes only with wording confirmed in the bible; cut anything that could describe any book.
 - Write only what the bible says happened. Don't fill a gap with a plausible detail (a color, a gesture, who
@@ -71,38 +77,55 @@ at the top.
   Then Z.") gets rewritten as a scene, with what someone wants or fears, one concrete image or line of dialogue
   from the bible, and the turn that leads into the next paragraph.
 
-## 5. Independent check
+## 5. Finish the writing chat
 
-The Mac version hands this to a separate checker that never saw the writing. Get as close to that as you can:
-start the check fresh from the two files, as if someone else wrote the summary, and judge only what the files say.
-
-First read the finished tab back from the doc (a docs read, not your notes or memory) and save its text as
-`/tmp/book/summary.md`, so you check what the reader will actually see. Then re-read it and `/tmp/book/bible.md`
-from the sandbox and write `/tmp/book/check.md`, a table with one row per claim:
-(a) Coverage: every numbered beat marked covered, partial or missing.
-(b) Facts: go through the summary sentence by sentence and list EVERY factual claim in it (names, relationships,
-events and their order, numbers, who says or does what, quotations, setting details, what critics said), not a
-sample. A typical summary holds one checkable claim every 25 to 40 words, so a 7,000-word summary has roughly
-200 to 280; if your count is far below that, you skipped sentences, so go back. Check each claim against the
-book's own text where you have it, otherwise against the bible. Its "Disagreements" and "Could not confirm" lists
-are rules: a claim stating one of those as fact is a problem. A claim neither covers gets one lookup and is
-"unverifiable" if that doesn't settle it. Every quotation must match its source word for word, and every line
-must be given to the right speaker.
-(c) Passages that drag, list instead of telling, read like a study guide, could describe any book, or explain the
-world in a block instead of inside the story.
-Count: beats covered/partial/missing, starred covered; claims checked, confirmed, wrong, unverifiable. Then
-count the words with `wc -w` (never estimate).
-
-Then fix every problem in the doc (find/replace edits, several per update), add missing beats from the bible, and
-hedge or cut what stayed unverifiable. Rewrite the study-guide passages (c) found as scenes.
-
-## 6. Finish
-
+- Read the finished tab back from the doc (a docs read, not your notes) and save it as `/tmp/book/summary.md`.
+  Count the words with `wc -w` (never estimate).
+- Quick self-pass only: every quotation matches the bible word for word and is given to the right speaker; every
+  name is spelled one way; no paragraph reads like a study guide. Do not run the fact check here and do not report
+  check counts: the check belongs to the separate check chat.
 - Replace the status line with the standfirst (a hook, the real word count, "full spoilers"). End the tab with the
-  Sources section the spec describes: one italic line with the check date and counts, then the source links.
+  Sources section the spec describes, but with this italic line until the check chat replaces it:
+  *Not yet independently checked. To check it, send "Book summary check: <title>" in a new chat.*
+  Then the source links.
 - Contents tab: add one row at the top of the table, under the header (Book as a mention chip of the new tab ·
   Author · Year · Added (today's date) · a one-line hook).
 - Coverage notes are for the reader: say what the sources do and don't cover, not which sites were paywalled or
   which tools failed. Leave biography trivia out of "In brief".
-- Read the finished tab through once, from the doc. Then tell the user, briefly: a three-sentence teaser, the word
-  count (from `wc -w`), the check counts, anything the sources couldn't cover, and anything you couldn't check.
+- Tell the user, briefly: a three-sentence teaser, the word count (from `wc -w`), anything the sources couldn't
+  cover, and, on its own last line, exactly what to send next: `Book summary check: <title>` in a new chat.
+
+## 6. The check chat ("Book summary check: <title>")
+
+You are the independent checker. You did not write this summary and have none of the writer's notes: judge only
+the tab as the reader sees it, against sources you open yourself. Read `summary-spec.md` first. Work in
+`/tmp/check/` in the sandbox and keep your reply text short.
+
+1. **The tab.** Open the library doc, find the book's tab in its tab list, read it with a docs read, and save its
+   text as `/tmp/check/summary.md`, one paragraph per line, numbered P1, P2, …. Run `wc -w` on it.
+2. **Sources.** If the book is public domain, get its full text by the same route as section 3 (sandbox `curl`,
+   then web fetch, then a chapter-by-chapter copy) and save it to `/tmp/check/text.txt`; it outranks everything
+   else. Also open at least two chapter-by-chapter study guides (three if there is no full text) and save each to
+   a file. Grep the files; don't read whole pages into the conversation.
+3. **Your own beat list, before judging.** From the sources, not from the summary, write
+   `/tmp/check/beats.md`: every story beat in order, by chapter, numbered, essential ones starred (two to five
+   per chapter for a novel). Then mark each covered, partial or missing in the summary.
+4. **Every claim, paragraph by paragraph.** Go through the summary one paragraph at a time and append one row per
+   factual claim to `/tmp/check/claims.tsv`: paragraph number, the claim (short), verdict (confirmed / wrong /
+   unverifiable), evidence (line number in the text or the guide's wording). A claim is any name, relationship,
+   event, its order, number, who says or does what, quotation, setting detail or critic's view. Expect one claim
+   every 25 to 40 words. After each chapter, run a count of rows per paragraph against its words divided by 40,
+   and go back to any paragraph that falls short before moving on.
+5. **Where errors hide.** Earlier test runs got whole scenes right but put details in the wrong place, so check
+   placement, not just existence: is this detail in this scene, at this time of day, in this order? Is this line
+   said by this person, at this moment? Is this quotation from this scene? Did the writer add a simile, a gesture,
+   a number or a motive the sources don't have? A true detail in the wrong scene is "wrong".
+6. **Fix the doc.** For each wrong claim, replace the whole paragraph (a docs update replacing that block) with a
+   corrected version grounded in the sources, keeping the writing as good or better. Add each missing or partial
+   beat into the paragraph where it belongs, told as a scene. Cut or hedge what stayed unverifiable. Rewrite any
+   paragraph that reads like a study guide or lists events.
+7. **Finish.** Read the tab back from the doc, run `wc -w` again, and correct the standfirst's word count. Replace
+   the "Not yet independently checked" line with one italic line: the writing date, "checked on <date> in a
+   separate chat against <the sources>", and the counts (beats: total, fully covered before fixes; claims:
+   checked, wrong, unverifiable; "all fixed"). Then tell the user, briefly: the counts, the three biggest fixes,
+   the new word count, and anything you could not check.
